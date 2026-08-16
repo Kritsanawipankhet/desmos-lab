@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SVG to Desmos</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if desmos_api_key %}
+  <script
+    src="https://www.desmos.com/api/v1.12/calculator.js?apiKey={{ desmos_api_key | urlencode }}"
+  ></script>
+  {% endif %}
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">SVG → EQUATIONS</p>
+      <h1>Turn SVG paths<br>into Desmos graphs</h1>
+    </header>
+    <section class="workspace">
+      <form id="upload-form">
+        <input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}">
+        {% if not desmos_api_key %}
+        <div class="warning">
+          <code>DESMOS_API_KEY</code> is not configured.<br>
+          <a href="https://www.desmos.com/my-api" target="_blank" rel="noreferrer">Request an API key from Desmos</a>, then restart the server.
+        </div>
+        {% endif %}
+        <label class="dropzone" for="svg-file">
+          <span class="icon">↗</span>
+          <strong>Choose or drop an SVG file here</strong>
+          <small>Maximum file size: 2 MB</small>
+          <input id="svg-file" name="svg" type="file" accept="image/svg+xml,.svg" required>
+        </label>
+        <button type="submit" {% if not desmos_api_key %}disabled{% endif %}>Create equations</button>
+        <output id="status" aria-live="polite">Ready</output>
+      </form>
+      <div id="calculator" aria-label="Desmos graphing calculator"></div>
+    </section>
+  </main>
+  {% if desmos_api_key %}<script src="{{ url_for('static', filename='app.js') }}"></script>{% endif %}
+</body>
+</html>
