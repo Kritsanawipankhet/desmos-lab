@@ -13,6 +13,15 @@ const calculator3d = Desmos.Calculator3D(document.getElementById("calculator-3d"
   keypad: true,
 });
 
+const calculatorLearn = Desmos.GraphingCalculator(document.getElementById("calculator-learn"), {
+  expressionsCollapsed: false,
+  settingsMenu: false,
+  keypad: true,
+  showGrid: true,
+  showXAxis: true,
+  showYAxis: true,
+});
+
 const demos = {
   waves: {
     label: "Wave surface",
@@ -145,18 +154,26 @@ function loadDemo(name) {
   });
 }
 
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    const show3d = tab.dataset.tab === "3d";
-    document.getElementById("panel-2d").hidden = show3d;
-    document.getElementById("panel-3d").hidden = !show3d;
-    document.querySelectorAll(".tab").forEach((item) => {
-      const active = item === tab;
-      item.classList.toggle("is-active", active);
-      item.setAttribute("aria-selected", String(active));
-    });
-    requestAnimationFrame(() => (show3d ? calculator3d : calculator2d).resize());
+const calculators = { "2d": calculator2d, "3d": calculator3d, learn: calculatorLearn };
+
+function selectTab(name) {
+  document.querySelectorAll(".tab-panel").forEach((panel) => {
+    panel.hidden = panel.id !== `panel-${name}`;
   });
+  document.querySelectorAll(".tab").forEach((item) => {
+    const active = item.dataset.tab === name;
+    item.classList.toggle("is-active", active);
+    item.setAttribute("aria-selected", String(active));
+  });
+  if (calculators[name]) requestAnimationFrame(() => calculators[name].resize());
+}
+
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.addEventListener("click", () => selectTab(tab.dataset.tab));
+});
+
+document.querySelectorAll("[data-open-tab]").forEach((button) => {
+  button.addEventListener("click", () => selectTab(button.dataset.openTab));
 });
 
 document.querySelectorAll(".demo-button").forEach((button) => {
@@ -164,6 +181,178 @@ document.querySelectorAll(".demo-button").forEach((button) => {
 });
 
 loadDemo("waves");
+
+const lessonTarget = (shapes) => `
+  <svg viewBox="-6 -6 12 12" role="img" aria-label="Graph to recreate">
+    <g transform="scale(1,-1)">${shapes}</g>
+  </svg>`;
+
+const lessons = [
+  {
+    title: "The first line",
+    short: "Straight line",
+    objective: "Write an equation for the line y = x + 1.",
+    hints: ["A straight line has the form y = mx + b.", "Use slope m = 1 and y-intercept b = 1.", "Try: y = x + 1"],
+    solution: [{ latex: "y=x+1" }],
+    target: lessonTarget('<line x1="-6" y1="-5" x2="5" y2="6" />'),
+    bounds: { left: -6, right: 6, bottom: -6, top: 6 },
+    check: (latex) => latex.some((value) => /^y=x\+1$/.test(value)),
+  },
+  {
+    title: "A bounded segment",
+    short: "Domain",
+    objective: "Draw y = 2 from x = -3 to x = 3 only.",
+    hints: ["Use braces to restrict where a graph appears.", "Put an inequality for x after y = 2.", "Try: y = 2 {-3 < x < 3}"],
+    solution: [{ latex: "y=2\\left\\{-3<x<3\\right\\}" }],
+    target: lessonTarget('<line x1="-3" y1="2" x2="3" y2="2" />'),
+    bounds: { left: -6, right: 6, bottom: -4, top: 6 },
+    check: (latex) => latex.some((value) => value.startsWith("y=2\\{") && value.includes("-3<x<3")),
+  },
+  {
+    title: "A centered circle",
+    short: "Circle",
+    objective: "Draw a circle centered at the origin with radius 3.",
+    hints: ["A circle uses both x² and y².", "For a circle at the origin: x² + y² = r².", "Try: x² + y² = 9"],
+    solution: [{ latex: "x^2+y^2=9" }],
+    target: lessonTarget('<circle cx="0" cy="0" r="3" />'),
+    bounds: { left: -6, right: 6, bottom: -6, top: 6 },
+    check: (latex) => latex.some((value) => /^(x\^2\+y\^2=9|y\^2\+x\^2=9)$/.test(value)),
+  },
+  {
+    title: "A rising parabola",
+    short: "Parabola",
+    objective: "Draw an upward parabola whose vertex is (0, -2).",
+    hints: ["Start with the parent function y = x².", "Moving a graph down means subtracting outside the square.", "Try: y = x² - 2"],
+    solution: [{ latex: "y=x^2-2" }],
+    target: lessonTarget('<path d="M-2.8 5.84 Q-1.4 -2 0 -2 Q1.4 -2 2.8 5.84" />'),
+    bounds: { left: -6, right: 6, bottom: -4, top: 7 },
+    check: (latex) => latex.some((value) => /^y=x\^2-2$/.test(value)),
+  },
+  {
+    title: "Absolute-value valley",
+    short: "Absolute value",
+    objective: "Create a V shape with vertex at (1, -1).",
+    hints: ["The parent graph is y = |x|.", "Replace x with x - 1, then move the graph down 1.", "Try: y = |x - 1| - 1"],
+    solution: [{ latex: "y=\\left|x-1\\right|-1" }],
+    target: lessonTarget('<polyline points="-5,5 1,-1 6,4" />'),
+    bounds: { left: -6, right: 6, bottom: -4, top: 7 },
+    check: (latex) => latex.includes("y=|x-1|-1"),
+  },
+  {
+    title: "Build a smile",
+    short: "Mini picture",
+    objective: "Combine a radius-4 face, two eye points at (-1.5, 1) and (1.5, 1), and the mouth y = -0.25x² - 1 for -2 < x < 2.",
+    hints: ["This challenge needs four expressions: one circle, two points, and one restricted parabola.", "Enter each eye as a coordinate on its own row.", "Circle: x²+y²=16. Mouth: y=-0.25x²-1 {-2<x<2}"],
+    solution: [
+      { latex: "x^2+y^2=16", color: Desmos.Colors.BLUE },
+      { latex: "(-1.5,1)", color: Desmos.Colors.RED, pointSize: 9 },
+      { latex: "(1.5,1)", color: Desmos.Colors.RED, pointSize: 9 },
+      { latex: "y=-0.25x^2-1\\left\\{-2<x<2\\right\\}", color: Desmos.Colors.PURPLE },
+    ],
+    target: lessonTarget('<circle cx="0" cy="0" r="4"/><circle class="filled" cx="-1.5" cy="1" r=".18"/><circle class="filled" cx="1.5" cy="1" r=".18"/><path d="M-2 -2 Q0 -1 2 -2"/>'),
+    bounds: { left: -5.5, right: 5.5, bottom: -5.5, top: 5.5 },
+    check: (latex) => {
+      const circle = latex.includes("x^2+y^2=16") || latex.includes("y^2+x^2=16");
+      const eyes = latex.includes("(-1.5,1)") && latex.includes("(1.5,1)");
+      const mouth = latex.some((value) => value.includes("y=-0.25x^2-1") && value.includes("-2<x<2"));
+      return circle && eyes && mouth;
+    },
+  },
+];
+
+function savedLessonProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("equationLabProgress") || "[]");
+    return Array.isArray(saved) ? saved.filter((index) => Number.isInteger(index) && index >= 0 && index < lessons.length) : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+const completedLessons = new Set(savedLessonProgress());
+let activeLesson = 0;
+let hintLevel = 0;
+
+function userLatex() {
+  return calculatorLearn.getExpressions()
+    .filter((expression) => expression.type === "expression" && expression.latex)
+    .map((expression) => expression.latex
+      .replace(/\\ /g, "")
+      .replace(/\\left|\\right/g, "")
+      .replace(/\\lvert|\\rvert/g, "|")
+      .replace(/\^\{([^{}]+)\}/g, "^$1")
+      .replace(/\\le/g, "<")
+      .replace(/\\ge/g, ">")
+      .replace(/\s/g, ""));
+}
+
+function renderLessonList() {
+  const list = document.getElementById("lesson-list");
+  list.replaceChildren(...lessons.map((lesson, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `lesson-chip${index === activeLesson ? " is-active" : ""}${completedLessons.has(index) ? " is-complete" : ""}`;
+    button.innerHTML = `<span>${completedLessons.has(index) ? "✓" : index + 1}</span>${lesson.short}`;
+    button.addEventListener("click", () => loadLesson(index));
+    return button;
+  }));
+  document.getElementById("course-progress").textContent = `${completedLessons.size} / ${lessons.length} complete`;
+}
+
+function loadLesson(index) {
+  activeLesson = index;
+  hintLevel = 0;
+  const lesson = lessons[index];
+  document.getElementById("lesson-number").textContent = `Lesson ${index + 1} of ${lessons.length}`;
+  document.getElementById("lesson-title").textContent = lesson.title;
+  document.getElementById("lesson-objective").textContent = lesson.objective;
+  document.getElementById("target-picture").innerHTML = lesson.target;
+  document.getElementById("lesson-hint").textContent = "Try it first, then ask for a hint.";
+  document.getElementById("lesson-feedback").textContent = "Enter an equation to begin.";
+  document.getElementById("lesson-feedback").className = "";
+  document.getElementById("lesson-state").textContent = completedLessons.has(index) ? "Completed" : "Not completed";
+  calculatorLearn.setBlank();
+  calculatorLearn.setMathBounds(lesson.bounds);
+  renderLessonList();
+}
+
+document.getElementById("show-hint").addEventListener("click", () => {
+  const lesson = lessons[activeLesson];
+  document.getElementById("lesson-hint").textContent = lesson.hints[Math.min(hintLevel, lesson.hints.length - 1)];
+  hintLevel += 1;
+});
+
+document.getElementById("show-solution").addEventListener("click", () => {
+  const lesson = lessons[activeLesson];
+  calculatorLearn.setBlank();
+  calculatorLearn.setExpressions(lesson.solution.map((expression, index) => ({
+    id: `solution-${activeLesson}-${index}`,
+    ...expression,
+  })));
+  calculatorLearn.setMathBounds(lesson.bounds);
+  const feedback = document.getElementById("lesson-feedback");
+  feedback.textContent = "Solution displayed. Study how each equation builds the target, then start over to try it yourself.";
+  feedback.className = "is-solution";
+});
+
+document.getElementById("reset-lesson").addEventListener("click", () => loadLesson(activeLesson));
+
+document.getElementById("check-answer").addEventListener("click", () => {
+  const feedback = document.getElementById("lesson-feedback");
+  if (lessons[activeLesson].check(userLatex())) {
+    completedLessons.add(activeLesson);
+    localStorage.setItem("equationLabProgress", JSON.stringify([...completedLessons]));
+    feedback.textContent = activeLesson === lessons.length - 1 ? "Excellent — you completed the course!" : "Correct! Choose the next lesson when you are ready.";
+    feedback.className = "is-success";
+    document.getElementById("lesson-state").textContent = "Completed";
+    renderLessonList();
+  } else {
+    feedback.textContent = "Not quite yet. Compare your graph with the target or reveal another hint.";
+    feedback.className = "is-error";
+  }
+});
+
+loadLesson(0);
 
 const form = document.getElementById("upload-form");
 const input = document.getElementById("svg-file");

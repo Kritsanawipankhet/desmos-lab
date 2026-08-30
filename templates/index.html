@@ -18,10 +18,57 @@
       <h1>Explore mathematics<br>in two and three dimensions</h1>
     </header>
     <nav class="tabs" aria-label="Calculator modes">
-      <button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-2d" id="tab-2d" data-tab="2d">SVG 2D</button>
+      <button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-overview" id="tab-overview" data-tab="overview">Overview</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-2d" id="tab-2d" data-tab="2d">SVG 2D</button>
       <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-3d" id="tab-3d" data-tab="3d">3D Demos</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-learn" id="tab-learn" data-tab="learn">Equation Lab</button>
     </nav>
-    <section class="workspace tab-panel" id="panel-2d" role="tabpanel" aria-labelledby="tab-2d">
+    <section class="overview-panel tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <div class="overview-hero">
+        <div>
+          <p class="menu-label">From pictures to mathematical ideas</p>
+          <h2>See how equations create shapes</h2>
+          <p>This project brings SVG conversion, interactive 3D examples, and equation-drawing lessons together in one place. Explore a finished graph or learn how to build one yourself.</p>
+        </div>
+        <div class="overview-mark" aria-hidden="true">
+          <svg viewBox="0 0 180 140">
+            <path d="M15 112 Q50 20 90 70 T165 28" />
+            <circle cx="90" cy="70" r="45" />
+            <line x1="18" y1="118" x2="165" y2="118" />
+            <line x1="35" y1="130" x2="35" y2="15" />
+          </svg>
+        </div>
+      </div>
+      <div class="overview-grid">
+        <article class="overview-card">
+          <span class="overview-index">01</span>
+          <h3>SVG 2D</h3>
+          <p>Upload an SVG image and convert its paths and shapes into expressions that can be explored in the Desmos graphing calculator.</p>
+          <button class="overview-link" type="button" data-open-tab="2d">Convert an SVG <span>→</span></button>
+        </article>
+        <article class="overview-card">
+          <span class="overview-index">02</span>
+          <h3>3D Demos</h3>
+          <p>Explore surfaces, intersections, vectors, transformations, coordinate systems, and other ideas in an interactive 3D space.</p>
+          <button class="overview-link" type="button" data-open-tab="3d">Explore in 3D <span>→</span></button>
+        </article>
+        <article class="overview-card">
+          <span class="overview-index">03</span>
+          <h3>Equation Lab</h3>
+          <p>Practice writing equations from target pictures, reveal progressive hints, check your work, and study a complete solution.</p>
+          <button class="overview-link" type="button" data-open-tab="learn">Start learning <span>→</span></button>
+        </article>
+      </div>
+      <div class="overview-steps">
+        <p class="menu-label">A simple learning flow</p>
+        <ol>
+          <li><strong>Observe</strong><span>Study a shape or mathematical model.</span></li>
+          <li><strong>Experiment</strong><span>Change equations and see the result immediately.</span></li>
+          <li><strong>Understand</strong><span>Connect each expression to the geometry it creates.</span></li>
+        </ol>
+      </div>
+    </section>
+    <section class="workspace tab-panel" id="panel-2d" role="tabpanel" aria-labelledby="tab-2d" hidden>
       <form id="upload-form">
         <input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}">
         {% if not desmos_api_key %}
@@ -87,6 +134,36 @@
         <output id="demo-status" aria-live="polite">Wave surface loaded</output>
       </aside>
       <div id="calculator-3d" class="calculator" aria-label="Desmos 3D calculator"></div>
+    </section>
+    <section class="workspace tab-panel learn-workspace" id="panel-learn" role="tabpanel" aria-labelledby="tab-learn" hidden>
+      <aside class="lesson-panel">
+        <div class="lesson-heading">
+          <p class="menu-label">Equation drawing course</p>
+          <span id="course-progress">0 / 6 complete</span>
+        </div>
+        <div id="lesson-list" class="lesson-list" aria-label="Lessons"></div>
+        <article class="challenge-card">
+          <div class="challenge-title-row">
+            <span id="lesson-number" class="lesson-number">Lesson 1</span>
+            <span id="lesson-state" class="lesson-state">Not completed</span>
+          </div>
+          <h2 id="lesson-title">Draw a line</h2>
+          <p id="lesson-objective"></p>
+          <div id="target-picture" class="target-picture" aria-label="Target picture"></div>
+          <div class="hint-box">
+            <strong>Hint</strong>
+            <p id="lesson-hint">Try it first, then ask for a hint.</p>
+          </div>
+          <div class="challenge-actions">
+            <button id="check-answer" type="button">Check answer</button>
+            <button id="show-hint" class="secondary-button" type="button">Show hint</button>
+            <button id="show-solution" class="solution-button" type="button">Show solution</button>
+            <button id="reset-lesson" class="text-button" type="button">Start over</button>
+          </div>
+          <output id="lesson-feedback" aria-live="polite">Enter an equation to begin.</output>
+        </article>
+      </aside>
+      <div id="calculator-learn" class="calculator" aria-label="Desmos equation practice calculator"></div>
     </section>
   </main>
   {% if desmos_api_key %}<script src="{{ url_for('static', filename='app.js') }}"></script>{% endif %}
