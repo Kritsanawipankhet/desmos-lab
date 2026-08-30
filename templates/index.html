@@ -14,10 +14,14 @@
 <body>
   <main>
     <header>
-      <p class="eyebrow">SVG → EQUATIONS</p>
-      <h1>Turn SVG paths<br>into Desmos graphs</h1>
+      <p class="eyebrow">DESMOS FOR EDUCATION</p>
+      <h1>Explore mathematics<br>in two and three dimensions</h1>
     </header>
-    <section class="workspace">
+    <nav class="tabs" aria-label="Calculator modes">
+      <button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-2d" id="tab-2d" data-tab="2d">SVG 2D</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-3d" id="tab-3d" data-tab="3d">3D Demos</button>
+    </nav>
+    <section class="workspace tab-panel" id="panel-2d" role="tabpanel" aria-labelledby="tab-2d">
       <form id="upload-form">
         <input type="hidden" id="csrf-token" name="csrf_token" value="{{ csrf_token() }}">
         {% if not desmos_api_key %}
@@ -35,7 +39,54 @@
         <button type="submit" {% if not desmos_api_key %}disabled{% endif %}>Create equations</button>
         <output id="status" aria-live="polite">Ready</output>
       </form>
-      <div id="calculator" aria-label="Desmos graphing calculator"></div>
+      <div id="calculator-2d" class="calculator" aria-label="Desmos graphing calculator"></div>
+    </section>
+    <section class="workspace tab-panel" id="panel-3d" role="tabpanel" aria-labelledby="tab-3d" hidden>
+      <aside class="demo-menu">
+        <p class="menu-label">Choose a lesson</p>
+        <button class="demo-button is-active" type="button" data-demo="waves">
+          <strong>Wave surface</strong>
+          <span>Explore z = sin(x) cos(y)</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="sphere">
+          <strong>Sphere and plane</strong>
+          <span>Study 3D intersections</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="helix">
+          <strong>Parametric helix</strong>
+          <span>Follow a curve through space</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="rotation">
+          <strong>Rotating cube</strong>
+          <span>Rotate a solid around the z-axis</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="scaling">
+          <strong>Scaling a model</strong>
+          <span>Resize independently along each axis</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="vectors">
+          <strong>Vectors in space</strong>
+          <span>Direction, magnitude, and addition</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="crossSection">
+          <strong>Cross sections</strong>
+          <span>Slice an ellipsoid with a plane</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="tangentPlane">
+          <strong>Tangent plane</strong>
+          <span>Linear approximation of a surface</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="spherical">
+          <strong>Spherical coordinates</strong>
+          <span>Radius, azimuth, and polar angle</span>
+        </button>
+        <button class="demo-button" type="button" data-demo="quadrics">
+          <strong>Quadric surfaces</strong>
+          <span>Compare common 3D equations</span>
+        </button>
+        <output id="demo-status" aria-live="polite">Wave surface loaded</output>
+      </aside>
+      <div id="calculator-3d" class="calculator" aria-label="Desmos 3D calculator"></div>
     </section>
   </main>
   {% if desmos_api_key %}<script src="{{ url_for('static', filename='app.js') }}"></script>{% endif %}

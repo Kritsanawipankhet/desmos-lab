@@ -1,6 +1,6 @@
 # SVG to Desmos
 
-A Flask web application that converts SVG geometry into point-list expressions and renders them with the Desmos Graphing Calculator API v1.12.
+A Flask web application that converts SVG geometry into point-list expressions and includes interactive educational demos powered by the Desmos 2D and 3D Calculator APIs.
 
 ## Getting started
 
@@ -58,6 +58,7 @@ PORT=8080 python app.py
 - Supports SVG `path`, `line`, `polyline`, `polygon`, `rect`, `circle`, and `ellipse` elements.
 - Supports common SVG transforms and inherited `stroke`, `fill`, and opacity values.
 - Converts separate SVG subpaths into separate Desmos expressions to prevent unwanted connecting lines.
+- Includes lesson demos for 3D surfaces, intersections, parametric curves, rotation, scaling, vectors, cross sections, tangent planes, spherical coordinates, and quadric surfaces.
 - Approximates curves with sampled points joined by Desmos line segments.
 - Uses SVG `stroke` as the expression color, falling back to `fill`; it does not fill enclosed areas.
 - Does not currently convert stroke widths, text, clip paths, masks, percentage colors, named CSS colors, or external stylesheets.

@@ -6,7 +6,11 @@ header { margin-bottom: 30px; }
 .eyebrow { color: #427049; font-weight: 800; letter-spacing: .16em; font-size: 12px; }
 h1 { max-width: 720px; margin: 8px 0 12px; font-family: Georgia, serif; font-size: clamp(42px, 7vw, 76px); line-height: .95; font-weight: 500; }
 .intro { color: #52605a; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tab { width: auto; padding: 11px 18px; background: #dce4d8; color: #405046; }
+.tab.is-active { background: #173f2a; color: white; }
 .workspace { display: grid; grid-template-columns: 310px 1fr; min-height: 560px; overflow: hidden; border: 1px solid #c8d0c5; border-radius: 22px; background: white; box-shadow: 0 24px 80px #51604926; }
+.tab-panel[hidden] { display: none; }
 form { padding: 24px; display: flex; flex-direction: column; gap: 16px; background: #f9faf7; border-right: 1px solid #d9ded5; }
 .warning { padding: 13px; border-radius: 10px; background: #fff2cf; color: #654b13; font-size: 13px; line-height: 1.5; }
 .warning a { color: inherit; font-weight: 750; }
@@ -18,5 +22,12 @@ input { width: 100%; margin-top: 12px; }
 button { border: 0; border-radius: 10px; padding: 14px 18px; background: #173f2a; color: white; font: inherit; font-weight: 750; cursor: pointer; }
 button:disabled { opacity: .5; }
 #status { min-height: 2.5em; margin: 0; font-size: 13px; }
-#calculator { width: 100%; min-height: 560px; }
-@media (max-width: 760px) { main { padding: 28px 0; } .workspace { grid-template-columns: 1fr; } form { border-right: 0; border-bottom: 1px solid #d9ded5; } #calculator { min-height: 480px; } }
+.calculator { width: 100%; min-height: 560px; }
+.demo-menu { padding: 24px; display: flex; flex-direction: column; gap: 12px; background: #f9faf7; border-right: 1px solid #d9ded5; }
+.menu-label { margin: 0 0 4px; color: #657168; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.demo-button { padding: 15px; background: white; color: #26362c; border: 1px solid #d4dbd1; text-align: left; }
+.demo-button strong, .demo-button span { display: block; }
+.demo-button span { margin-top: 4px; color: #6b756f; font-size: 12px; font-weight: 400; }
+.demo-button.is-active { border-color: #3f7650; background: #eaf4e5; }
+#demo-status { margin-top: auto; color: #6b756f; font-size: 13px; }
+@media (max-width: 760px) { main { padding: 28px 0; } .workspace { grid-template-columns: 1fr; } form, .demo-menu { border-right: 0; border-bottom: 1px solid #d9ded5; } .calculator { min-height: 480px; } }

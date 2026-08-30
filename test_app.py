@@ -1,5 +1,6 @@
 import io
 import re
+from pathlib import Path
 
 from app import app
 
@@ -34,6 +35,28 @@ def test_upload_status_uses_accessible_output_element():
     response = client.get("/")
     assert b'<output id="status" aria-live="polite">Ready</output>' in response.data
     assert b'role="status"' not in response.data
+
+
+def test_page_has_2d_and_3d_calculator_tabs():
+    client = app.test_client()
+    response = client.get("/")
+    assert b'data-tab="2d"' in response.data
+    assert b'data-tab="3d"' in response.data
+    assert b'id="calculator-2d"' in response.data
+    assert b'id="calculator-3d"' in response.data
+    assert b'data-demo="rotation"' in response.data
+    assert b'data-demo="scaling"' in response.data
+    assert b'data-demo="vectors"' in response.data
+    assert b'data-demo="crossSection"' in response.data
+    assert b'data-demo="tangentPlane"' in response.data
+    assert b'data-demo="spherical"' in response.data
+    assert b'data-demo="quadrics"' in response.data
+
+
+def test_3d_demos_enable_function_keypad():
+    javascript = Path("static/app.js").read_text()
+    calculator_options = javascript.split("const calculator3d", 1)[1].split("});", 1)[0]
+    assert "keypad: true" in calculator_options
 
 
 def test_convert_accepts_valid_csrf_token():
