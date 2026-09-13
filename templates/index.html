@@ -22,6 +22,7 @@
       <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-2d" id="tab-2d" data-tab="2d">SVG 2D</button>
       <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-3d" id="tab-3d" data-tab="3d">3D Demos</button>
       <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-learn" id="tab-learn" data-tab="learn">Equation Lab</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-marble" id="tab-marble" data-tab="marble">Marble Lab</button>
     </nav>
     <section class="overview-panel tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
       <div class="overview-hero">
@@ -57,6 +58,12 @@
           <h3>Equation Lab</h3>
           <p>Practice writing equations from target pictures, reveal progressive hints, check your work, and study a complete solution.</p>
           <button class="overview-link" type="button" data-open-tab="learn">Start learning <span>→</span></button>
+        </article>
+        <article class="overview-card">
+          <span class="overview-index">04</span>
+          <h3>Marble Lab</h3>
+          <p>Shape a graph into a track, launch a marble, collect every star, and discover how function parameters change its path.</p>
+          <button class="overview-link" type="button" data-open-tab="marble">Play a challenge <span>→</span></button>
         </article>
       </div>
       <div class="overview-steps">
@@ -164,6 +171,37 @@
         </article>
       </aside>
       <div id="calculator-learn" class="calculator" aria-label="Desmos equation practice calculator"></div>
+    </section>
+    <section class="workspace tab-panel marble-workspace" id="panel-marble" role="tabpanel" aria-labelledby="tab-marble" hidden>
+      <aside class="marble-panel">
+        <div class="lesson-heading">
+          <p class="menu-label">Shape the track</p>
+          <span id="marble-progress">0 / 3 complete</span>
+        </div>
+        <div id="marble-level-list" class="marble-level-list" aria-label="Marble challenges"></div>
+        <article class="marble-card">
+          <span id="marble-level-number" class="lesson-number">Challenge 1</span>
+          <h2 id="marble-title">First ramp</h2>
+          <p id="marble-objective"></p>
+          <div class="marble-equation"><span>Current equation</span><code id="marble-equation">y = ax + b</code></div>
+          <div id="marble-controls" class="marble-controls"></div>
+          <div class="marble-hint">
+            <strong>Hint</strong>
+            <span id="marble-hint">Adjust the equation, then launch the marble.</span>
+          </div>
+          <div class="marble-actions">
+            <button id="launch-marble" type="button">Launch</button>
+            <button id="reset-marble" class="secondary-button" type="button">Reset</button>
+            <button id="hint-marble" class="text-button" type="button">Show hint</button>
+          </div>
+          <output id="marble-feedback" aria-live="polite">Collect every star to complete the challenge.</output>
+        </article>
+      </aside>
+      <div class="marble-stage">
+        <div id="calculator-marble" class="calculator" aria-label="Desmos marble track calculator"></div>
+        <canvas id="marble-canvas" aria-label="Animated marble and challenge objects"></canvas>
+        <div class="marble-legend" aria-hidden="true"><span class="legend-marble"></span> Marble <span class="legend-star">★</span> Star</div>
+      </div>
     </section>
   </main>
   {% if desmos_api_key %}<script src="{{ url_for('static', filename='app.js') }}"></script>{% endif %}

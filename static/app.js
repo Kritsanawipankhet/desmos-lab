@@ -22,6 +22,17 @@ const calculatorLearn = Desmos.GraphingCalculator(document.getElementById("calcu
   showYAxis: true,
 });
 
+const calculatorMarble = Desmos.GraphingCalculator(document.getElementById("calculator-marble"), {
+  expressionsCollapsed: true,
+  settingsMenu: false,
+  keypad: false,
+  lockViewport: true,
+  zoomButtons: false,
+  showGrid: true,
+  showXAxis: true,
+  showYAxis: true,
+});
+
 const demos = {
   waves: {
     label: "Wave surface",
@@ -154,7 +165,7 @@ function loadDemo(name) {
   });
 }
 
-const calculators = { "2d": calculator2d, "3d": calculator3d, learn: calculatorLearn };
+const calculators = { "2d": calculator2d, "3d": calculator3d, learn: calculatorLearn, marble: calculatorMarble };
 
 function selectTab(name) {
   document.querySelectorAll(".tab-panel").forEach((panel) => {
@@ -353,6 +364,291 @@ document.getElementById("check-answer").addEventListener("click", () => {
 });
 
 loadLesson(0);
+
+const marbleBounds = { left: -6, right: 6, bottom: -5, top: 7 };
+const marbleLevels = [
+  {
+    title: "First ramp",
+    objective: "Tune a straight line so the marble rolls through and collects both stars.",
+    family: "linear",
+    params: { a: -0.5, b: 2 },
+    ranges: { a: [-1.2, 0.2, 0.05], b: [0, 4, 0.1] },
+    start: { x: -5, y: 6 },
+    stars: [{ x: -2, y: 3.2 }, { x: 2, y: 1.2 }],
+    hint: "A negative slope sends the marble from upper left to lower right. Try a near -0.5.",
+  },
+  {
+    title: "Parabola valley",
+    objective: "Use a parabola to carry momentum through the valley and collect all three stars.",
+    family: "quadratic",
+    params: { a: 0.18, h: 0, k: -2 },
+    ranges: { a: [0.08, 0.35, 0.01], h: [-1.5, 1.5, 0.1], k: [-3, 0, 0.1] },
+    start: { x: -5, y: 6 },
+    stars: [{ x: -2.2, y: -0.9 }, { x: 0, y: -1.7 }, { x: 2.2, y: -0.9 }],
+    hint: "A wide upward parabola preserves enough speed. Start near a = 0.18, h = 0, k = -2.",
+  },
+  {
+    title: "Absolute-value canyon",
+    objective: "Build a V-shaped canyon that redirects the marble through all three stars.",
+    family: "absolute",
+    params: { a: 0.6, h: 0, k: -2 },
+    ranges: { a: [0.25, 1, 0.05], h: [-1.5, 1.5, 0.1], k: [-3, 0, 0.1] },
+    start: { x: -5, y: 6 },
+    stars: [{ x: -2.4, y: -0.25 }, { x: 0, y: -1.7 }, { x: 2.4, y: -0.25 }],
+    hint: "Keep the V centered and not too steep. Try a = 0.6, h = 0, k = -2.",
+  },
+];
+
+const marbleCanvas = document.getElementById("marble-canvas");
+const marbleContext = marbleCanvas.getContext("2d");
+const marbleCompleted = new Set(JSON.parse(localStorage.getItem("marbleLabProgress") || "[]"));
+let marbleLevelIndex = 0;
+let marbleParams = {};
+let marble = null;
+let collectedStars = [];
+let marbleLevelWon = false;
+let marbleAnimation = null;
+let lastMarbleTime = 0;
+
+function marbleFunction(x) {
+  const level = marbleLevels[marbleLevelIndex];
+  if (level.family === "linear") return marbleParams.a * x + marbleParams.b;
+  if (level.family === "quadratic") return marbleParams.a * (x - marbleParams.h) ** 2 + marbleParams.k;
+  return marbleParams.a * Math.abs(x - marbleParams.h) + marbleParams.k;
+}
+
+function marbleSlope(x) {
+  const level = marbleLevels[marbleLevelIndex];
+  if (level.family === "linear") return marbleParams.a;
+  if (level.family === "quadratic") return 2 * marbleParams.a * (x - marbleParams.h);
+  return x < marbleParams.h ? -marbleParams.a : marbleParams.a;
+}
+
+function marbleLatex() {
+  const level = marbleLevels[marbleLevelIndex];
+  const { a, b, h, k } = marbleParams;
+  if (level.family === "linear") return `y=${a}x${b >= 0 ? "+" : ""}${b}`;
+  const shift = h === 0 ? "x" : `x${h < 0 ? "+" : "-"}${Math.abs(h)}`;
+  const tail = k === 0 ? "" : `${k > 0 ? "+" : ""}${k}`;
+  if (level.family === "quadratic") return `y=${a}(${shift})^2${tail}`;
+  return `y=${a}\\left|${shift}\\right|${tail}`;
+}
+
+function updateMarbleGraph() {
+  const latex = marbleLatex();
+  calculatorMarble.setExpression({ id: "track", latex, color: Desmos.Colors.BLUE, lineWidth: 5 });
+  document.getElementById("marble-equation").textContent = latex
+    .replace(/\\left|\\right/g, "")
+    .replace("^2", "²");
+  drawMarbleScene();
+}
+
+function renderMarbleControls() {
+  const level = marbleLevels[marbleLevelIndex];
+  const controls = document.getElementById("marble-controls");
+  controls.replaceChildren(...Object.entries(level.ranges).map(([name, range]) => {
+    const label = document.createElement("label");
+    label.innerHTML = `<span><strong>${name}</strong><output>${marbleParams[name]}</output></span>`;
+    const input = document.createElement("input");
+    input.type = "range";
+    [input.min, input.max, input.step] = range;
+    input.value = marbleParams[name];
+    input.addEventListener("input", () => {
+      marbleParams[name] = Number(input.value);
+      label.querySelector("output").textContent = input.value;
+      updateMarbleGraph();
+    });
+    label.append(input);
+    return label;
+  }));
+}
+
+function renderMarbleLevels() {
+  const list = document.getElementById("marble-level-list");
+  list.replaceChildren(...marbleLevels.map((level, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `marble-level${index === marbleLevelIndex ? " is-active" : ""}${marbleCompleted.has(index) ? " is-complete" : ""}`;
+    button.innerHTML = `<span>${marbleCompleted.has(index) ? "✓" : index + 1}</span>${level.title}`;
+    button.addEventListener("click", () => loadMarbleLevel(index));
+    return button;
+  }));
+  document.getElementById("marble-progress").textContent = `${marbleCompleted.size} / ${marbleLevels.length} complete`;
+}
+
+function stopMarble() {
+  if (marbleAnimation) cancelAnimationFrame(marbleAnimation);
+  marbleAnimation = null;
+  document.querySelectorAll("#marble-controls input").forEach((input) => { input.disabled = false; });
+}
+
+function resetMarble(message = "Collect every star to complete the challenge.") {
+  stopMarble();
+  const start = marbleLevels[marbleLevelIndex].start;
+  marble = { x: start.x, y: start.y, vx: 0, vy: 0 };
+  collectedStars = marbleLevels[marbleLevelIndex].stars.map(() => false);
+  marbleLevelWon = false;
+  const feedback = document.getElementById("marble-feedback");
+  feedback.textContent = message;
+  feedback.className = "";
+  document.getElementById("launch-marble").disabled = false;
+  drawMarbleScene();
+}
+
+function loadMarbleLevel(index) {
+  marbleLevelIndex = index;
+  const level = marbleLevels[index];
+  marbleParams = { ...level.params };
+  document.getElementById("marble-level-number").textContent = `Challenge ${index + 1} of ${marbleLevels.length}`;
+  document.getElementById("marble-title").textContent = level.title;
+  document.getElementById("marble-objective").textContent = level.objective;
+  document.getElementById("marble-hint").textContent = "Adjust the equation, then launch the marble.";
+  calculatorMarble.setBlank();
+  calculatorMarble.setMathBounds(marbleBounds);
+  renderMarbleControls();
+  renderMarbleLevels();
+  updateMarbleGraph();
+  resetMarble();
+}
+
+function canvasPoint(point) {
+  const graphBounds = calculatorMarble.graphpaperBounds;
+  if (graphBounds && graphBounds.mathCoordinates && graphBounds.pixelCoordinates) {
+    const math = graphBounds.mathCoordinates;
+    const pixels = graphBounds.pixelCoordinates;
+    return {
+      x: pixels.left + (point.x - math.left) / (math.right - math.left) * (pixels.right - pixels.left),
+      y: pixels.top + (math.top - point.y) / (math.top - math.bottom) * (pixels.bottom - pixels.top),
+    };
+  }
+  return {
+    x: (point.x - marbleBounds.left) / (marbleBounds.right - marbleBounds.left) * marbleCanvas.clientWidth,
+    y: (marbleBounds.top - point.y) / (marbleBounds.top - marbleBounds.bottom) * marbleCanvas.clientHeight,
+  };
+}
+
+function drawStar(x, y, filled) {
+  const point = canvasPoint({ x, y });
+  marbleContext.save();
+  marbleContext.translate(point.x, point.y);
+  marbleContext.beginPath();
+  for (let index = 0; index < 10; index += 1) {
+    const angle = -Math.PI / 2 + index * Math.PI / 5;
+    const radius = index % 2 ? 5 : 11;
+    marbleContext.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+  }
+  marbleContext.closePath();
+  marbleContext.fillStyle = filled ? "#d7ddd4" : "#f2b632";
+  marbleContext.strokeStyle = filled ? "#aab3a7" : "#9a6810";
+  marbleContext.lineWidth = 2;
+  marbleContext.fill();
+  marbleContext.stroke();
+  marbleContext.restore();
+}
+
+function drawMarbleScene() {
+  if (!marbleCanvas.clientWidth) return;
+  marbleContext.clearRect(0, 0, marbleCanvas.clientWidth, marbleCanvas.clientHeight);
+  const level = marbleLevels[marbleLevelIndex];
+  level.stars.forEach((star, index) => drawStar(star.x, star.y, collectedStars[index]));
+  const ball = canvasPoint(marble);
+  const gradient = marbleContext.createRadialGradient(ball.x - 4, ball.y - 5, 2, ball.x, ball.y, 12);
+  gradient.addColorStop(0, "#ffffff");
+  gradient.addColorStop(0.25, "#8fc5ef");
+  gradient.addColorStop(1, "#24689e");
+  marbleContext.fillStyle = gradient;
+  marbleContext.strokeStyle = "#16496f";
+  marbleContext.lineWidth = 2;
+  marbleContext.beginPath();
+  marbleContext.arc(ball.x, ball.y, 10, 0, Math.PI * 2);
+  marbleContext.fill();
+  marbleContext.stroke();
+}
+
+function finishMarbleLevel() {
+  marbleLevelWon = true;
+  marbleCompleted.add(marbleLevelIndex);
+  localStorage.setItem("marbleLabProgress", JSON.stringify([...marbleCompleted]));
+  const feedback = document.getElementById("marble-feedback");
+  feedback.textContent = "Challenge complete — every star collected!";
+  feedback.className = "is-success";
+  renderMarbleLevels();
+}
+
+function animateMarble(time) {
+  const dt = Math.min((time - lastMarbleTime) / 1000, 0.025);
+  lastMarbleTime = time;
+  const previous = { ...marble };
+  marble.vy -= 8.5 * dt;
+  marble.x += marble.vx * dt;
+  marble.y += marble.vy * dt;
+  const radius = 0.2;
+  const surface = marbleFunction(marble.x) + radius;
+  const previousSurface = marbleFunction(previous.x) + radius;
+  const crossedTrackFromAbove = marble.y <= surface && previous.y >= previousSurface - 0.08;
+  if (crossedTrackFromAbove) {
+    marble.y = surface;
+    const slope = marbleSlope(marble.x);
+    const length = Math.sqrt(1 + slope * slope);
+    const tx = 1 / length;
+    const ty = slope / length;
+    let speed = marble.vx * tx + marble.vy * ty;
+    const level = marbleLevels[marbleLevelIndex];
+    const crossedAbsoluteVertex = level.family === "absolute"
+      && previous.x <= marbleParams.h
+      && marble.x >= marbleParams.h
+      && marble.vx > 0;
+    if (crossedAbsoluteVertex) speed = Math.hypot(marble.vx, marble.vy) * 0.98;
+    if (Math.abs(speed) < 0.35) speed = slope < 0 ? 0.35 : -0.35;
+    marble.vx = tx * speed * 0.992;
+    marble.vy = ty * speed * 0.992 + 0.03;
+  }
+  const level = marbleLevels[marbleLevelIndex];
+  level.stars.forEach((star, index) => {
+    if (Math.hypot(marble.x - star.x, marble.y - star.y) < 0.5) collectedStars[index] = true;
+  });
+  if (collectedStars.every(Boolean) && !marbleLevelWon) {
+    finishMarbleLevel();
+  }
+  if (marble.y < marbleBounds.bottom - 1 || marble.x < marbleBounds.left - 1 || marble.x > marbleBounds.right + 1) {
+    if (marbleLevelWon) {
+      stopMarble();
+      drawMarbleScene();
+      return;
+    }
+    resetMarble("The marble left the graph. Adjust the track and try again.");
+    document.getElementById("marble-feedback").className = "is-error";
+    return;
+  }
+  drawMarbleScene();
+  marbleAnimation = requestAnimationFrame(animateMarble);
+}
+
+document.getElementById("launch-marble").addEventListener("click", () => {
+  resetMarble("Marble in motion…");
+  document.querySelectorAll("#marble-controls input").forEach((input) => { input.disabled = true; });
+  document.getElementById("launch-marble").disabled = true;
+  lastMarbleTime = performance.now();
+  marbleAnimation = requestAnimationFrame(animateMarble);
+});
+document.getElementById("reset-marble").addEventListener("click", () => resetMarble());
+document.getElementById("hint-marble").addEventListener("click", () => {
+  document.getElementById("marble-hint").textContent = marbleLevels[marbleLevelIndex].hint;
+});
+
+new ResizeObserver(() => {
+  const ratio = window.devicePixelRatio || 1;
+  const width = marbleCanvas.clientWidth;
+  const height = marbleCanvas.clientHeight;
+  marbleCanvas.width = Math.round(width * ratio);
+  marbleCanvas.height = Math.round(height * ratio);
+  marbleContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+  drawMarbleScene();
+}).observe(document.querySelector(".marble-stage"));
+
+calculatorMarble.observe("graphpaperBounds", () => drawMarbleScene());
+
+loadMarbleLevel(0);
 
 const form = document.getElementById("upload-form");
 const input = document.getElementById("svg-file");

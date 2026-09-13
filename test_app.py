@@ -44,12 +44,16 @@ def test_page_has_2d_3d_and_learning_tabs():
     assert b'data-tab="2d"' in response.data
     assert b'data-tab="3d"' in response.data
     assert b'data-tab="learn"' in response.data
+    assert b'data-tab="marble"' in response.data
     assert b'id="calculator-2d"' in response.data
     assert b'id="calculator-3d"' in response.data
     assert b'id="calculator-learn"' in response.data
     assert b'id="panel-overview"' in response.data
     assert b'data-open-tab="learn"' in response.data
     assert b'id="lesson-list"' in response.data
+    assert b'id="calculator-marble"' in response.data
+    assert b'id="marble-canvas"' in response.data
+    assert b'id="launch-marble"' in response.data
     assert b'id="check-answer"' in response.data
     assert b'id="show-solution"' in response.data
     assert b'data-demo="rotation"' in response.data
@@ -79,6 +83,24 @@ def test_equation_lab_has_lessons_and_local_progress():
     assert 'latex: "y=2\\\\left\\\\{-3<x<3\\\\right\\\\}"' in javascript
     assert 'latex: "y=\\\\left|x-1\\\\right|-1"' in javascript
     assert 'latex: "y=-0.25x^2-1\\\\left\\\\{-2<x<2\\\\right\\\\}"' in javascript
+
+
+def test_marble_lab_has_physics_levels_and_progress():
+    javascript = Path("static/app.js").read_text()
+    marble_options = javascript.split("const calculatorMarble", 1)[1].split("});", 1)[0]
+    assert "lockViewport: true" in marble_options
+    assert "zoomButtons: false" in marble_options
+    assert "const marbleLevels = [" in javascript
+    assert 'family: "linear"' in javascript
+    assert 'family: "quadratic"' in javascript
+    assert 'family: "absolute"' in javascript
+    assert "requestAnimationFrame(animateMarble)" in javascript
+    assert "const crossedTrackFromAbove" in javascript
+    assert "const crossedAbsoluteVertex" in javascript
+    assert "collectedStars.every(Boolean) && !marbleLevelWon" in javascript
+    assert 'calculatorMarble.observe("graphpaperBounds"' in javascript
+    assert "graphBounds.pixelCoordinates" in javascript
+    assert 'localStorage.setItem("marbleLabProgress"' in javascript
 
 
 def test_convert_accepts_valid_csrf_token():
