@@ -87,6 +87,35 @@ Open <http://127.0.0.1:8000>. To use another port, change `PORT` in `.env` or ru
 PORT=8080 python app.py
 ```
 
+## Deploy to Vercel
+
+This project uses Vercel's Python runtime and exposes the Flask `app` from `app.py`.
+
+1. Install the Vercel CLI and sign in:
+
+   ```bash
+   npm install -g vercel
+   vercel login
+   ```
+
+2. From the project directory, link the project and add the production environment variables:
+
+   ```bash
+   vercel link
+   vercel env add DESMOS_API_KEY production
+   vercel env add FLASK_SESSION_SECRET production
+   ```
+
+   Enter the values when prompted. Use the Desmos API key itself for `DESMOS_API_KEY` and a persistent random value for `FLASK_SESSION_SECRET`.
+
+3. Deploy to production:
+
+   ```bash
+   vercel --prod
+   ```
+
+Vercel will print the public deployment URL. The application is serverless, so uploaded files and browser progress are not stored on the server between requests. `Equation Lab` and `Marble Lab` progress is saved locally in each user's browser.
+
 ## Testing
 
 The tests use pytest, which is not an application dependency. Install it in the virtual environment before running the suite:
